@@ -1,70 +1,22 @@
 import { eq, and } from 'drizzle-orm'
-import { db } from '../index'
-import * as schema from './schema'
+import { createServerFn } from '@tanstack/react-start'
+import { z } from 'zod'
+import { db } from '@/db/index'
+import * as schema from '@/db/schema'
+import { authMiddleware } from '@/middleware/auth-middleware'
+import { getUserFromHeaders } from './utils'
 
-import type {
-  InsertGroup,
-  InsertGroupMember,
-  InsertMatchPrediction,
-  InsertWinnerPrediction,
-  InsertUser,
-  InsertTournament,
-  InsertTournamentTeam,
-  InsertMatch,
+import {
+  groupInsertSchema,
+  groupMemberInsertSchema,
+  matchPredictionInsertSchema,
+  winnerPredictionInsertSchema,
+  userInsertSchema,
+  tournamentInsertSchema,
+  tournamentTeamInsertSchema,
+  tournamentGroupInsertSchema,
+  matchInsertSchema,
 } from '../lib/types'
-
-export async function createGroup(newGroup: InsertGroup) {
-  let [insertedGroup] = await db
-    .insert(schema.group)
-    .values(newGroup)
-    .returning({ insertedId: schema.group.id })
-
-  await db
-    .insert(schema.groupMember)
-    .values({ groupId: insertedGroup.insertedId, userId: newGroup.adminId })
-
-  return insertedGroup.insertedId
-}
-
-export async function createMatchPrediction(
-  newMatchPrediction: InsertMatchPrediction,
-) {
-  await db.insert(schema.matchPrediction).values({
-    userId: newMatchPrediction.userId,
-    matchId: newMatchPrediction.matchId,
-    teamAScore: newMatchPrediction.teamAScore,
-    teamBScore: newMatchPrediction.teamBScore,
-    penaltyResult: null, // Assuming no penalties for now
-  })
-}
-
-export async function createWinnerPrediction(
-  newWinnerPrediction: InsertWinnerPrediction,
-) {
-  await db.insert(schema.winnerPrediction).values({
-    userId: newWinnerPrediction.userId,
-    tournamentId: newWinnerPrediction.tournamentId,
-    round: newWinnerPrediction.round, // Assuming round is valid enum
-    tournamentTeamId: newWinnerPrediction.tournamentTeamId,
-  })
-}
-
-export async function removePlayerFromGroup(
-  groupMemberInsert: InsertGroupMember,
-) {
-  await db
-    .delete(schema.groupMember)
-    .where(
-      and(
-        eq(schema.groupMember.groupId, groupMemberInsert.groupId),
-        eq(schema.groupMember.userId, groupMemberInsert.userId),
-      ),
-    )
-}
-
-export async function deleteGroup(groupId: number) {
-  await db.delete(schema.group).where(eq(schema.group.id, groupId))
-}
 
 // Generate a random 10-character alphanumeric code
 function generateInviteCode(): string {
@@ -76,172 +28,342 @@ function generateInviteCode(): string {
   return result
 }
 
-export async function createGroupInviteCode(groupId: number) {
-  const code = generateInviteCode()
+export const createGroup = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(groupInsertSchema.pick({ tournamentId: true, name: true }))
+  .handler(async ({ data }) => {
+    const user = await getUserFromHeaders()
 
-  const [inviteCode] = await db
-    .insert(schema.groupInvite)
-    .values({
-      groupId,
-      code,
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    const [insertedGroup] = await db
+      .insert(schema.group)
+      .values({
+        ...data,
+        adminId: user.id,
+      })
+      .returning({ insertedId: schema.group.id })
+
+    await db
+      .insert(schema.groupMember)
+      .values({ groupId: insertedGroup.insertedId, userId: user.id })
+
+    return insertedGroup.insertedId
+  })
+
+export const createMatchPrediction = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(matchPredictionInsertSchema)
+  .handler(async ({ data }) => {
+    await db.insert(schema.matchPrediction).values({
+      userId: data.userId,
+      matchId: data.matchId,
+      teamAScore: data.teamAScore,
+      teamBScore: data.teamBScore,
+      penaltyResult: null,
     })
-    .returning()
+  })
 
-  return inviteCode
-}
+export const createWinnerPrediction = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(winnerPredictionInsertSchema)
+  .handler(async ({ data }) => {
+    await db.insert(schema.winnerPrediction).values({
+      userId: data.userId,
+      tournamentId: data.tournamentId,
+      round: data.round,
+      tournamentTeamId: data.tournamentTeamId,
+    })
+  })
 
-export async function updateGroupInviteCode(groupId: number) {
-  const newCode = generateInviteCode()
+export const removePlayerFromGroup = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(groupMemberInsertSchema.pick({ groupId: true, userId: true }))
+  .handler(async ({ data }) => {
+    await db
+      .delete(schema.groupMember)
+      .where(
+        and(
+          eq(schema.groupMember.groupId, data.groupId),
+          eq(schema.groupMember.userId, data.userId),
+        ),
+      )
+  })
 
-  const [updatedCode] = await db
-    .update(schema.groupInvite)
-    .set({ code: newCode })
-    .where(eq(schema.groupInvite.groupId, groupId))
-    .returning()
+export const deleteGroup = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(z.object({ groupId: z.number() }))
+  .handler(async ({ data }) => {
+    await db.delete(schema.group).where(eq(schema.group.id, data.groupId))
+  })
 
-  return updatedCode
-}
+export const createGroupInviteCode = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(z.object({ groupId: z.number() }))
+  .handler(async ({ data }) => {
+    const code = generateInviteCode()
 
-export async function joinGroupWithInviteCode(userId: string, code: string) {
-  // Find the group by invite code
-  const inviteCodeData = await db.query.groupInvite.findFirst({
-    where: eq(schema.groupInvite.code, code),
-    with: {
-      group: {
-        with: {
-          members: true,
+    const [inviteCode] = await db
+      .insert(schema.groupInvite)
+      .values({
+        groupId: data.groupId,
+        code,
+      })
+      .returning()
+
+    return inviteCode
+  })
+
+export const updateGroupInviteCode = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(z.object({ groupId: z.number() }))
+  .handler(async ({ data }) => {
+    const newCode = generateInviteCode()
+
+    const [updatedCode] = await db
+      .update(schema.groupInvite)
+      .set({ code: newCode })
+      .where(eq(schema.groupInvite.groupId, data.groupId))
+      .returning()
+
+    return updatedCode
+  })
+
+export const joinGroupWithInviteCode = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(z.object({ code: z.string() }))
+  .handler(async ({ data }) => {
+    const user = await getUserFromHeaders()
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    const inviteCodeData = await db.query.groupInvite.findFirst({
+      where: eq(schema.groupInvite.code, data.code),
+      with: {
+        group: {
+          with: {
+            members: true,
+          },
         },
       },
-    },
-  })
+    })
 
-  if (!inviteCodeData) {
-    throw new Error('Invalid invite code')
-  }
+    if (!inviteCodeData) {
+      throw new Error('Invalid invite code')
+    }
 
-  const groupData = inviteCodeData.group
+    const groupData = inviteCodeData.group
 
-  // Check if user is already a member
-  const existingMember = groupData.members.find(
-    (member) => member.userId === userId,
-  )
-  if (existingMember) {
-    throw new Error('You are already a member of this group')
-  }
-
-  // Check group size limit (500 members)
-  if (groupData.members.length >= 500) {
-    throw new Error('Group has reached maximum capacity (500 members)')
-  }
-
-  // Add user to group
-  await db.insert(schema.groupMember).values({
-    groupId: groupData.id,
-    userId,
-  })
-
-  return groupData
-}
-
-export async function leaveGroup(userId: string, groupId: number) {
-  await db
-    .delete(schema.groupMember)
-    .where(
-      and(
-        eq(schema.groupMember.groupId, groupId),
-        eq(schema.groupMember.userId, userId),
-      ),
+    const existingMember = groupData.members.find(
+      (member) => member.userId === user.id,
     )
-}
+    if (existingMember) {
+      throw new Error('You are already a member of this group')
+    }
 
-export async function updateGroup(
-  groupId: number,
-  updates: Partial<InsertGroup>,
-) {
-  await db.update(schema.group).set(updates).where(eq(schema.group.id, groupId))
-}
+    if (groupData.members.length >= 500) {
+      throw new Error('Group has reached maximum capacity (500 members)')
+    }
 
-export async function updateMatchPrediction(
-  predictionId: number,
-  updates: Partial<InsertMatchPrediction>,
-) {
-  await db
-    .update(schema.matchPrediction)
-    .set(updates)
-    .where(eq(schema.matchPrediction.id, predictionId))
-}
+    await db.insert(schema.groupMember).values({
+      groupId: groupData.id,
+      userId: user.id,
+    })
 
-export async function updateWinnerPrediction(
-  predictionId: number,
-  updates: Partial<InsertWinnerPrediction>,
-) {
-  await db
-    .update(schema.winnerPrediction)
-    .set(updates)
-    .where(eq(schema.winnerPrediction.id, predictionId))
-}
+    return groupData
+  })
 
-export async function updateUserProfile(
-  userId: string,
-  updates: Partial<InsertUser>,
-) {
-  await db.update(schema.user).set(updates).where(eq(schema.user.id, userId))
-}
+export const leaveGroup = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(z.object({ groupId: z.number() }))
+  .handler(async ({ data }) => {
+    const user = await getUserFromHeaders()
 
-export async function createTournament(data: InsertTournament) {
-  const [tournament] = await db
-    .insert(schema.tournament)
-    .values(data)
-    .returning({ id: schema.tournament.id })
-  return tournament.id
-}
+    if (!user) {
+      throw new Error('User not found')
+    }
 
-export async function createTournamentGroup(
-  data: Omit<typeof schema.tournamentGroup.$inferInsert, 'id'>,
-) {
-  const [group] = await db
-    .insert(schema.tournamentGroup)
-    .values(data)
-    .returning({ id: schema.tournamentGroup.id })
-  return group.id
-}
+    await db
+      .delete(schema.groupMember)
+      .where(
+        and(
+          eq(schema.groupMember.groupId, data.groupId),
+          eq(schema.groupMember.userId, user.id),
+        ),
+      )
+  })
 
-export async function updateTournamentGroup(
-  id: number,
-  data: Partial<typeof schema.tournamentGroup.$inferInsert>,
-) {
-  await db
-    .update(schema.tournamentGroup)
-    .set(data)
-    .where(eq(schema.tournamentGroup.id, id))
-}
+export const updateGroup = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(
+    z.object({ groupId: z.number(), updates: groupInsertSchema.partial() }),
+  )
+  .handler(async ({ data }) => {
+    await db
+      .update(schema.group)
+      .set(data.updates)
+      .where(eq(schema.group.id, data.groupId))
+  })
 
-export async function createTournamentTeam(data: InsertTournamentTeam) {
-  const [team] = await db
-    .insert(schema.tournamentTeam)
-    .values(data)
-    .returning({ id: schema.tournamentTeam.id })
-  return team.id
-}
+export const updateMatchPrediction = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(
+    z.object({
+      predictionId: z.number(),
+      updates: matchPredictionInsertSchema.partial(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await db
+      .update(schema.matchPrediction)
+      .set(data.updates)
+      .where(eq(schema.matchPrediction.id, data.predictionId))
+  })
 
-export async function updateTournamentTeam(
-  id: number,
-  data: Partial<InsertTournamentTeam>,
-) {
-  await db
-    .update(schema.tournamentTeam)
-    .set(data)
-    .where(eq(schema.tournamentTeam.id, id))
-}
+export const updateWinnerPrediction = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(
+    z.object({
+      predictionId: z.number(),
+      updates: winnerPredictionInsertSchema.partial(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await db
+      .update(schema.winnerPrediction)
+      .set(data.updates)
+      .where(eq(schema.winnerPrediction.id, data.predictionId))
+  })
 
-export async function createMatch(data: InsertMatch) {
-  const [match] = await db
-    .insert(schema.match)
-    .values(data)
-    .returning({ id: schema.match.id })
-  return match.id
-}
+export const updateUserProfile = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(z.object({ updates: userInsertSchema.partial() }))
+  .handler(async ({ data }) => {
+    const user = await getUserFromHeaders()
 
-export async function updateMatch(id: number, data: Partial<InsertMatch>) {
-  await db.update(schema.match).set(data).where(eq(schema.match.id, id))
-}
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    await db
+      .update(schema.user)
+      .set(data.updates)
+      .where(eq(schema.user.id, user.id))
+  })
+
+export const changePassword = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(
+    z.object({
+      currentPassword: z.string().min(1, 'Current password is required'),
+      newPassword: z
+        .string()
+        .min(6, 'New password must be at least 6 characters'),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { auth } = await import('@/lib/auth')
+    const { getRequestHeaders } = await import('@tanstack/react-start/server')
+
+    const headers = getRequestHeaders()
+
+    const result = await auth.api.changePassword({
+      body: {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      },
+      headers,
+    })
+
+    if (!result) {
+      throw new Error(
+        'Failed to change password. Please check your current password.',
+      )
+    }
+
+    return { success: true }
+  })
+
+export const createTournament = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(tournamentInsertSchema)
+  .handler(async ({ data }) => {
+    const [tournament] = await db
+      .insert(schema.tournament)
+      .values(data)
+      .returning({ id: schema.tournament.id })
+    return tournament.id
+  })
+
+export const createTournamentGroup = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(tournamentGroupInsertSchema.omit({ id: true }))
+  .handler(async ({ data }) => {
+    const [group] = await db
+      .insert(schema.tournamentGroup)
+      .values(data)
+      .returning({ id: schema.tournamentGroup.id })
+    return group.id
+  })
+
+export const updateTournamentGroup = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(
+    z.object({ id: z.number(), data: tournamentGroupInsertSchema.partial() }),
+  )
+  .handler(async ({ data }) => {
+    await db
+      .update(schema.tournamentGroup)
+      .set(data.data)
+      .where(eq(schema.tournamentGroup.id, data.id))
+  })
+
+export const createTournamentTeam = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(tournamentTeamInsertSchema)
+  .handler(async ({ data }) => {
+    const [team] = await db
+      .insert(schema.tournamentTeam)
+      .values(data)
+      .returning({ id: schema.tournamentTeam.id })
+    return team.id
+  })
+
+export const updateTournamentTeam = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(
+    z.object({ id: z.number(), data: tournamentTeamInsertSchema.partial() }),
+  )
+  .handler(async ({ data }) => {
+    await db
+      .update(schema.tournamentTeam)
+      .set(data.data)
+      .where(eq(schema.tournamentTeam.id, data.id))
+  })
+
+export const createMatch = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(matchInsertSchema)
+  .handler(async ({ data }) => {
+    const [match] = await db
+      .insert(schema.match)
+      .values(data)
+      .returning({ id: schema.match.id })
+    return match.id
+  })
+
+export const updateMatch = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .inputValidator(
+    z.object({ id: z.number(), data: matchInsertSchema.partial() }),
+  )
+  .handler(async ({ data }) => {
+    await db
+      .update(schema.match)
+      .set(data.data)
+      .where(eq(schema.match.id, data.id))
+  })

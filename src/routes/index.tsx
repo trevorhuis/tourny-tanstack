@@ -1,56 +1,90 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { AuthLayout } from '@/components/ui/auth-layout'
+import { Button } from '@/components/ui/button'
+import { Heading, Subheading } from '@/components/ui/heading'
 
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img
-              src="/tanstack-circle-logo.png"
-              alt="TanStack Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
-            />
-            <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em]">
-              <span className="text-gray-300">TANSTACK</span>{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                START
-              </span>
-            </h1>
+    <AuthLayout>
+      <div className="w-full max-w-4xl text-center space-y-8">
+        <div className="space-y-4">
+          <Heading className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+            ⚽ Tourny
+          </Heading>
+          <Subheading className="text-xl text-gray-600 dark:text-gray-300">
+            The Ultimate Tournament Prediction Game
+          </Subheading>
+        </div>
+
+        <div className="space-y-6">
+          <p className="text-lg text-gray-700 dark:text-gray-200 max-w-2xl mx-auto">
+            Think you know football? Prove it! Join Tourny to predict World Cup
+            matches, compete with friends, and climb the leaderboards. Every
+            goal matters, every prediction counts.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6 mt-8">
+            <div className="bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700">
+              <div className="text-3xl mb-3">🎯</div>
+              <Heading level={4} className="mb-2">
+                Make Predictions
+              </Heading>
+              <p className="text-gray-600 dark:text-gray-300">
+                Predict match scores and tournament winners. Score points for
+                accurate predictions and climb the rankings.
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700">
+              <div className="text-3xl mb-3">👥</div>
+              <Heading level={4} className="mb-2">
+                Create Groups
+              </Heading>
+              <p className="text-gray-600 dark:text-gray-300">
+                Start or join prediction groups with friends, family, or
+                colleagues. See who really knows their football.
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700">
+              <div className="text-3xl mb-3">🏆</div>
+              <Heading level={4} className="mb-2">
+                Compete & Win
+              </Heading>
+              <p className="text-gray-600 dark:text-gray-300">
+                Track your progress on leaderboards, view detailed statistics,
+                and prove you're the ultimate football predictor.
+              </p>
+            </div>
           </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            The framework for next generation AI applications
-          </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Full-stack framework powered by TanStack Router for React and Solid.
-            Build modern applications with server functions, streaming, and type
-            safety.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href="https://tanstack.com/start"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
-            >
-              Documentation
-            </a>
-            <p className="text-gray-400 text-sm mt-2">
-              Begin your TanStack Start journey by editing{' '}
-              <code className="px-2 py-1 bg-slate-700 rounded text-cyan-400">
-                /src/routes/index.tsx
-              </code>
+
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+            <Heading level={4} className="mb-3">
+              🌟 Ready for the Next World Cup?
+            </Heading>
+            <p className="text-gray-700 dark:text-gray-200 mb-4">
+              Join football fans making predictions, competing in groups, and
+              testing their knowledge against the best in the world.
             </p>
+            <div className="flex gap-4 justify-center">
+              <Button color="blue" className="px-8 py-3 text-lg" href="/signup">
+                Get Started Free
+              </Button>
+              <Button color="zinc" className="px-8 py-3 text-lg" href="/signin">
+                Sign In
+              </Button>
+            </div>
+          </div>
+
+          <div className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
+            <p>✓ Free to play</p>
+            <p>✓ No downloads required</p>
+            <p>✓ Play with friends worldwide</p>
           </div>
         </div>
-      </section>
-
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-      </section>
-    </div>
+      </div>
+    </AuthLayout>
   )
 }

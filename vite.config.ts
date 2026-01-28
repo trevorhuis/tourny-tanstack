@@ -7,7 +7,6 @@ import { fileURLToPath, URL } from 'url'
 
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
-import neon from './neon-vite-plugin.ts'
 
 const config = defineConfig({
   resolve: {
@@ -18,7 +17,6 @@ const config = defineConfig({
   plugins: [
     devtools(),
     nitro(),
-    neon,
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],

@@ -9,13 +9,97 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as GroupsRouteImport } from './routes/groups'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GroupsIndexRouteImport } from './routes/groups.index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as GroupsGroupIdRouteImport } from './routes/groups.$groupId'
+import { Route as AdminTournamentRouteImport } from './routes/admin/tournament'
+import { Route as AdminTeamRouteImport } from './routes/admin/team'
+import { Route as AdminMatchRouteImport } from './routes/admin/match'
+import { Route as GroupsJoinCodeRouteImport } from './routes/groups.join.$code'
+import { Route as GroupsGroupIdInviteRouteImport } from './routes/groups.$groupId.invite'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsRoute = GroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsIndexRoute = GroupsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GroupsRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
+  id: '/$groupId',
+  path: '/$groupId',
+  getParentRoute: () => GroupsRoute,
+} as any)
+const AdminTournamentRoute = AdminTournamentRouteImport.update({
+  id: '/tournament',
+  path: '/tournament',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTeamRoute = AdminTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMatchRoute = AdminMatchRouteImport.update({
+  id: '/match',
+  path: '/match',
+  getParentRoute: () => AdminRoute,
+} as any)
+const GroupsJoinCodeRoute = GroupsJoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
+  getParentRoute: () => GroupsRoute,
+} as any)
+const GroupsGroupIdInviteRoute = GroupsGroupIdInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => GroupsGroupIdRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -25,38 +109,229 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/groups': typeof GroupsRouteWithChildren
+  '/leaderboard': typeof LeaderboardRoute
+  '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/admin/match': typeof AdminMatchRoute
+  '/admin/team': typeof AdminTeamRoute
+  '/admin/tournament': typeof AdminTournamentRoute
+  '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
+  '/admin/': typeof AdminIndexRoute
+  '/groups/': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/groups/$groupId/invite': typeof GroupsGroupIdInviteRoute
+  '/groups/join/$code': typeof GroupsJoinCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/admin/match': typeof AdminMatchRoute
+  '/admin/team': typeof AdminTeamRoute
+  '/admin/tournament': typeof AdminTournamentRoute
+  '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
+  '/admin': typeof AdminIndexRoute
+  '/groups': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/groups/$groupId/invite': typeof GroupsGroupIdInviteRoute
+  '/groups/join/$code': typeof GroupsJoinCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/groups': typeof GroupsRouteWithChildren
+  '/leaderboard': typeof LeaderboardRoute
+  '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/admin/match': typeof AdminMatchRoute
+  '/admin/team': typeof AdminTeamRoute
+  '/admin/tournament': typeof AdminTournamentRoute
+  '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
+  '/admin/': typeof AdminIndexRoute
+  '/groups/': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/groups/$groupId/invite': typeof GroupsGroupIdInviteRoute
+  '/groups/join/$code': typeof GroupsJoinCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/groups'
+    | '/leaderboard'
+    | '/profile'
+    | '/signin'
+    | '/signup'
+    | '/admin/match'
+    | '/admin/team'
+    | '/admin/tournament'
+    | '/groups/$groupId'
+    | '/admin/'
+    | '/groups/'
+    | '/api/auth/$'
+    | '/groups/$groupId/invite'
+    | '/groups/join/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/auth/$'
-  id: '__root__' | '/' | '/api/auth/$'
+  to:
+    | '/'
+    | '/leaderboard'
+    | '/profile'
+    | '/signin'
+    | '/signup'
+    | '/admin/match'
+    | '/admin/team'
+    | '/admin/tournament'
+    | '/groups/$groupId'
+    | '/admin'
+    | '/groups'
+    | '/api/auth/$'
+    | '/groups/$groupId/invite'
+    | '/groups/join/$code'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/groups'
+    | '/leaderboard'
+    | '/profile'
+    | '/signin'
+    | '/signup'
+    | '/admin/match'
+    | '/admin/team'
+    | '/admin/tournament'
+    | '/groups/$groupId'
+    | '/admin/'
+    | '/groups/'
+    | '/api/auth/$'
+    | '/groups/$groupId/invite'
+    | '/groups/join/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  GroupsRoute: typeof GroupsRouteWithChildren
+  LeaderboardRoute: typeof LeaderboardRoute
+  ProfileRoute: typeof ProfileRoute
+  SigninRoute: typeof SigninRoute
+  SignupRoute: typeof SignupRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups': {
+      id: '/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof GroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/groups/': {
+      id: '/groups/'
+      path: '/'
+      fullPath: '/groups/'
+      preLoaderRoute: typeof GroupsIndexRouteImport
+      parentRoute: typeof GroupsRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/groups/$groupId': {
+      id: '/groups/$groupId'
+      path: '/$groupId'
+      fullPath: '/groups/$groupId'
+      preLoaderRoute: typeof GroupsGroupIdRouteImport
+      parentRoute: typeof GroupsRoute
+    }
+    '/admin/tournament': {
+      id: '/admin/tournament'
+      path: '/tournament'
+      fullPath: '/admin/tournament'
+      preLoaderRoute: typeof AdminTournamentRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/team': {
+      id: '/admin/team'
+      path: '/team'
+      fullPath: '/admin/team'
+      preLoaderRoute: typeof AdminTeamRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/match': {
+      id: '/admin/match'
+      path: '/match'
+      fullPath: '/admin/match'
+      preLoaderRoute: typeof AdminMatchRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/groups/join/$code': {
+      id: '/groups/join/$code'
+      path: '/join/$code'
+      fullPath: '/groups/join/$code'
+      preLoaderRoute: typeof GroupsJoinCodeRouteImport
+      parentRoute: typeof GroupsRoute
+    }
+    '/groups/$groupId/invite': {
+      id: '/groups/$groupId/invite'
+      path: '/invite'
+      fullPath: '/groups/$groupId/invite'
+      preLoaderRoute: typeof GroupsGroupIdInviteRouteImport
+      parentRoute: typeof GroupsGroupIdRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -68,8 +343,57 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminMatchRoute: typeof AdminMatchRoute
+  AdminTeamRoute: typeof AdminTeamRoute
+  AdminTournamentRoute: typeof AdminTournamentRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminMatchRoute: AdminMatchRoute,
+  AdminTeamRoute: AdminTeamRoute,
+  AdminTournamentRoute: AdminTournamentRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface GroupsGroupIdRouteChildren {
+  GroupsGroupIdInviteRoute: typeof GroupsGroupIdInviteRoute
+}
+
+const GroupsGroupIdRouteChildren: GroupsGroupIdRouteChildren = {
+  GroupsGroupIdInviteRoute: GroupsGroupIdInviteRoute,
+}
+
+const GroupsGroupIdRouteWithChildren = GroupsGroupIdRoute._addFileChildren(
+  GroupsGroupIdRouteChildren,
+)
+
+interface GroupsRouteChildren {
+  GroupsGroupIdRoute: typeof GroupsGroupIdRouteWithChildren
+  GroupsIndexRoute: typeof GroupsIndexRoute
+  GroupsJoinCodeRoute: typeof GroupsJoinCodeRoute
+}
+
+const GroupsRouteChildren: GroupsRouteChildren = {
+  GroupsGroupIdRoute: GroupsGroupIdRouteWithChildren,
+  GroupsIndexRoute: GroupsIndexRoute,
+  GroupsJoinCodeRoute: GroupsJoinCodeRoute,
+}
+
+const GroupsRouteWithChildren =
+  GroupsRoute._addFileChildren(GroupsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  GroupsRoute: GroupsRouteWithChildren,
+  LeaderboardRoute: LeaderboardRoute,
+  ProfileRoute: ProfileRoute,
+  SigninRoute: SigninRoute,
+  SignupRoute: SignupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
